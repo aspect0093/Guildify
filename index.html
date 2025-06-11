@@ -6,10 +6,7 @@
   <meta name="description" content="Convert Discord invite links into server information and QR codes instantly. View server name, icon, banner, members, and join button." />
   <meta name="keywords" content="Discord, Invite Info, Discord QR Code, Discord Server Details, Convert Invite Link, Discord Tool, Join Discord" />
   <meta name="author" content="X" />
-
-<meta name="google-site-verification" content="KSY2l4w_QE-oK9uAW1DuihgE4tKitdpsdCx9rYFC5TU" />
-
-
+  <meta name="google-site-verification" content="KSY2l4w_QE-oK9uAW1DuihgE4tKitdpsdCx9rYFC5TU" />
   <title>Guildify</title>
   <link rel="icon" type="image/png" href="favicon.png" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet">
@@ -37,9 +34,22 @@
       margin-bottom: 20px;
       animation: fadeInDown 1.5s ease;
     }
-    header h1 {
-      font-size: 2rem;
+    .brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .brand img {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+    }
+    .brand h1 {
+      margin: 0;
       color: var(--accent);
+      font-size: 2rem;
     }
     .converter {
       background: var(--glass);
@@ -137,13 +147,16 @@
     }
     @media(max-width: 768px) {
       .converter { padding: 15px; }
-      header h1 { font-size: 1.4rem; }
+      .brand h1 { font-size: 1.4rem; }
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>Discord Invite ↠ QR & Info</h1>
+    <div class="brand">
+      <img src="favicon.png" alt="Guildify Logo" />
+      <h1>Guildify</h1>
+    </div>
     <p>Convert Discord invite link to QR & server info</p>
   </header>
   <div class="converter">
@@ -203,11 +216,11 @@
           document.getElementById('name').textContent = guild.name;
           document.getElementById('desc').textContent = guild.description || 'No description';
           if (guild.banner) {
-  const bannerExt = guild.banner.startsWith('a_') ? 'gif' : 'png';
-  document.getElementById('banner').src = `https://cdn.discordapp.com/banners/${guild.id}/${guild.banner}.${bannerExt}?size=1024`;
-} else {
-  document.getElementById('banner').src = '';
-}
+            const bannerExt = guild.banner.startsWith('a_') ? 'gif' : 'png';
+            document.getElementById('banner').src = `https://cdn.discordapp.com/banners/${guild.id}/${guild.banner}.${bannerExt}?size=1024`;
+          } else {
+            document.getElementById('banner').src = '';
+          }
           document.getElementById('counts').textContent = `Members: ${data.approximate_member_count} | Online: ${data.approximate_presence_count}`;
           document.getElementById('joinLink').href = `https://discord.gg/${code}`;
           QRCode.toCanvas(document.getElementById('qrCanvas'), `https://discord.gg/${code}`);
@@ -240,11 +253,11 @@
           const guild = promo.guild;
           const ext = guild.icon?.startsWith('a_') ? 'gif' : 'png';
           if (guild.banner) {
-  const bannerExt = guild.banner.startsWith('a_') ? 'gif' : 'png';
-  document.getElementById('promoBanner').src = `https://cdn.discordapp.com/banners/${guild.id}/${guild.banner}.${bannerExt}?size=1024`;
-} else {
-  document.getElementById('promoBanner').src = '';
-}
+            const bannerExt = guild.banner.startsWith('a_') ? 'gif' : 'png';
+            document.getElementById('promoBanner').src = `https://cdn.discordapp.com/banners/${guild.id}/${guild.banner}.${bannerExt}?size=1024`;
+          } else {
+            document.getElementById('promoBanner').src = '';
+          }
           document.getElementById('promoIcon').src = `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.${ext}?size=64`;
           document.getElementById('promoName').textContent = guild.name;
           document.getElementById('promoJoin').href = `https://discord.gg/${promoCode}`;
