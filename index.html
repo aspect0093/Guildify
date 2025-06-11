@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Convert Discord invite links into server information and QR codes instantly. View server name, icon, banner, members, and join button." />
+  <meta name="keywords" content="Discord, Invite Info, Discord QR Code, Discord Server Details, Convert Invite Link, Discord Tool, Join Discord" />
+  <meta name="author" content="X" />
+
+<meta name="google-site-verification" content="KSY2l4w_QE-oK9uAW1DuihgE4tKitdpsdCx9rYFC5TU" />
+
+
+  <title>Guildify</title>
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0d12;
+      --accent: #a368ff;
+      --text: #f0f0f0;
+      --glass: rgba(255,255,255,0.04);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+      animation: fadeInDown 1.5s ease;
+    }
+    header h1 {
+      font-size: 2rem;
+      color: var(--accent);
+    }
+    .converter {
+      background: var(--glass);
+      border-radius: 16px;
+      padding: 20px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 0 20px rgba(163,104,255,0.2);
+      backdrop-filter: blur(10px);
+      animation: fadeInUp 1.5s ease;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      background: #1a1a20;
+      color: var(--text);
+      margin-bottom: 10px;
+      font-size: 1rem;
+    }
+    button {
+      background: var(--accent);
+      color: #fff;
+      padding: 12px;
+      border: none;
+      width: 100%;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    button:active { transform: scale(0.98); }
+
+    .loading {
+      display: none;
+      margin: 20px auto;
+    }
+    .spinner {
+      border: 4px solid rgba(255, 255, 255, 0.1);
+      border-left-color: var(--accent);
+      border-radius: 50%;
+      width: 48px;
+      height: 48px;
+      animation: spin 1s linear infinite;
+      margin: auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .info {
+      display: none;
+      margin-top: 20px;
+      text-align: center;
+    }
+    .info img.icon {
+      border-radius: 50%;
+      width: 100px;
+      height: 100px;
+      margin: 10px;
+    }
+    .info img.banner {
+      width: 100%;
+      border-radius: 10px;
+      margin: 10px 0;
+    }
+    .info h2 { color: var(--accent); }
+    .qr { margin-top: 15px; }
+    .error {
+      color: red;
+      margin: 10px 0;
+      display: none;
+    }
+    .promo-box {
+      background: var(--glass);
+      margin-top: 30px;
+      padding: 10px;
+      border-radius: 12px;
+      text-align: center;
+      display: none;
+    }
+    .promo-box img {
+      max-width: 100%;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @media(max-width: 768px) {
+      .converter { padding: 15px; }
+      header h1 { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Discord Invite ↠ QR & Info</h1>
+    <p>Convert Discord invite link to QR & server info</p>
+  </header>
+  <div class="converter">
+    <input id="invite" placeholder="Paste your Discord invite link here..." />
+    <button onclick="fetchDiscordInfo()">Generate</button>
+    <div class="loading" id="loading"><div class="spinner"></div></div>
+    <div class="error" id="error"></div>
+    <div class="info" id="serverInfo">
+      <img id="icon" class="icon" />
+      <h2 id="name"></h2>
+      <p id="desc"></p>
+      <img id="banner" class="banner" />
+      <p id="counts"></p>
+      <a id="joinLink" href="#" target="_blank">
+        <button>Join Server</button>
+      </a>
+      <div class="qr">
+        <canvas id="qrCanvas"></canvas><br>
+        <button onclick="downloadQR()">Download QR Code</button>
+      </div>
+    </div>
+    <div class="promo-box" id="promoBox">
+      <img id="promoBanner" />
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <img id="promoIcon" class="icon" style="width: 50px; height: 50px;" />
+        <h3 id="promoName"></h3>
+        <a id="promoJoin" href="#" target="_blank"><button>Join</button></a>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
+  <script>
+    async function fetchDiscordInfo() {
+      const input = document.getElementById('invite');
+      const code = input.value.trim().split('/').pop();
+      const loading = document.getElementById('loading');
+      const error = document.getElementById('error');
+      const info = document.getElementById('serverInfo');
+      error.style.display = 'none';
+      info.style.display = 'none';
+      loading.style.display = 'block';
+
+      // Fake delay
+      await new Promise(resolve => setTimeout(resolve, 1200));
+
+      fetch(`https://discord.com/api/v10/invites/${code}?with_counts=true&with_expiration=true`)
+        .then(res => {
+          if (!res.ok) throw new Error('Invalid, expired, or NSFW/scam invite');
+          return res.json();
+        })
+        .then(data => {
+          loading.style.display = 'none';
+          const guild = data.guild;
+          const ext = guild.icon?.startsWith('a_') ? 'gif' : 'png';
+          document.getElementById('icon').src = `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.${ext}?size=128`;
+          document.getElementById('name').textContent = guild.name;
+          document.getElementById('desc').textContent = guild.description || 'No description';
+          if (guild.banner) {
+  const bannerExt = guild.banner.startsWith('a_') ? 'gif' : 'png';
+  document.getElementById('banner').src = `https://cdn.discordapp.com/banners/${guild.id}/${guild.banner}.${bannerExt}?size=1024`;
+} else {
+  document.getElementById('banner').src = '';
+}
+          document.getElementById('counts').textContent = `Members: ${data.approximate_member_count} | Online: ${data.approximate_presence_count}`;
+          document.getElementById('joinLink').href = `https://discord.gg/${code}`;
+          QRCode.toCanvas(document.getElementById('qrCanvas'), `https://discord.gg/${code}`);
+          info.style.display = 'block';
+        })
+        .catch(err => {
+          loading.style.display = 'none';
+          error.textContent = err.message;
+          error.style.display = 'block';
+        });
+    }
+
+    function downloadQR() {
+      const canvas = document.getElementById('qrCanvas');
+      const link = document.createElement('a');
+      link.download = 'discord_qr.png';
+      link.href = canvas.toDataURL();
+      link.click();
+    }
+
+    // Promo code auto-load
+    window.addEventListener('DOMContentLoaded', () => {
+      const promoCode = "TYMVHDZ3T8";
+      fetch(`https://discord.com/api/v10/invites/${promoCode}?with_counts=true`)
+        .then(res => {
+          if (!res.ok) throw new Error("Promo invite invalid");
+          return res.json();
+        })
+        .then(promo => {
+          const guild = promo.guild;
+          const ext = guild.icon?.startsWith('a_') ? 'gif' : 'png';
+          if (guild.banner) {
+  const bannerExt = guild.banner.startsWith('a_') ? 'gif' : 'png';
+  document.getElementById('promoBanner').src = `https://cdn.discordapp.com/banners/${guild.id}/${guild.banner}.${bannerExt}?size=1024`;
+} else {
+  document.getElementById('promoBanner').src = '';
+}
+          document.getElementById('promoIcon').src = `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.${ext}?size=64`;
+          document.getElementById('promoName').textContent = guild.name;
+          document.getElementById('promoJoin').href = `https://discord.gg/${promoCode}`;
+          document.getElementById('promoBox').style.display = 'block';
+        })
+        .catch(() => {
+          document.getElementById('promoBox').style.display = 'none';
+        });
+    });
+  </script>
+</body>
+</html>
